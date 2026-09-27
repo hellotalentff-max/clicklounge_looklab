@@ -134,9 +134,7 @@
       '?pkg=' + encodeURIComponent('The Look Lab: ' + combo) +
       '&price=' + encodeURIComponent(total) +
       '&desc=' + encodeURIComponent(combo + (gown ? ' · Gown: ' + gown : '')) +
-      '&dur=' + encodeURIComponent((session.dur || 60) +
-                 (mood.id === 'double' ? 30 : (mood.id === 'coatcode' || mood.id === 'angelic' ? 10 : 0)) +
-                 (picked.time ? 15 : 0));
+      '&dur=' + encodeURIComponent(slotMinutes(session.id, mood.id, picked));
 
     app.innerHTML =
       '<div class="hero">' +
@@ -169,7 +167,17 @@
     document.title = 'Your Look — ' + combo + ' · ClickLounge Studio';
   }
 
-  render();
+  // The prices come from the "Look Lab Parts" tab. This page is what a client
+  // reads before deciding, so it draws ONCE, after the fetch settles — a
+  // total that changes while someone is looking at it is worse than a total
+  // that takes a moment to appear. loadLookLab always calls back, within 3.5
+  // seconds at the outside, with the best data it could get.
+  document.getElementById('app').innerHTML =
+    '<div class="wrap"><div class="bad"><p>Loading your look…</p></div></div>';
+  loadLookLab(function (source) {
+    render();
+    try { document.body.setAttribute('data-ll-source', source); } catch (e) {}
+  });
 })();
 </script>
 </body>
