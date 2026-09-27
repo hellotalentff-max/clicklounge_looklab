@@ -283,25 +283,21 @@
   }
 
 
-  // Prestige Wall is only offered with Twofold, which includes it.
-  // With Twofold, Digital and Mini are covered too, so they're not shown.
-  function keepsakeOptions(mood) {
-    return KEEPSAKES.filter(function (x) {
-      if (mood === 'double') return x.id === 'wall' || x.id === 'acrylic';
-      return x.id !== 'wall';
-    });
-  }
+  // keepsakeOptions() now lives in looklab-data.js, driven by the "Only
+  // With" / "Not With" columns, so which keepsakes are offered with which
+  // mood is a sheet edit rather than a code edit.
 
   function calcTotalFor(session, mood, keepsake, extras) {
-    // Read the price off the session itself. There used to be a second table
-    // keyed by id here, and when the tiers were renamed it kept the old
-    // lowercase key — so Standard looked up as undefined and every total
-    // containing it came out NaN. One source, no second place to forget.
+    // Read every price off the object it belongs to. There used to be a
+    // second table keyed by id here, and when the tiers were renamed it kept
+    // the old lowercase key — so Standard looked up as undefined and every
+    // total containing it came out NaN. The add-ons had a third table below,
+    // with the prices typed out again. Both are gone: one source, no second
+    // place to forget.
     var sess = SESSIONS.filter(function (x) { return x.id === session; })[0];
     var moodObj = mood === 'double' ? DOUBLE : MOODS.filter(function (x) { return x.id === mood; })[0];
-    var EXTRA_PRICE = { outfit: 300, photos: 500, rush: 500, time: 700, framed5r: 800, framed8r: 1000 };
     var total = (sess ? sess.price : 0) + (moodObj ? moodObj.price : 0) + keepsakePrice(session, keepsake, mood);
-    Object.keys(extras || {}).forEach(function (k) { if (extras[k]) total += EXTRA_PRICE[k] || 0; });
+    Object.keys(extras || {}).forEach(function (k) { if (extras[k]) total += extraPrice(k); });
     return total;
   }
 
@@ -609,9 +605,10 @@
     // Same lesson: read it off the session. The old chain tested 'standard'
     // in lowercase, which never matched the renamed id, so a 10-minute
     // Standard shoot was booking a 90-minute slot and blocking the studio.
-    var pkgDur = (curSession && curSession.dur) || 60;
-    if (s.mood === 'double') pkgDur += 30;
-    else if (s.mood === 'coatcode' || s.mood === 'angelic') pkgDur += 10;   // the +10 mins these looks include
+    // Every part now carries its own Minutes, so a new mood that adds shoot
+    // time books the right slot the moment its row exists — there is no list
+    // of mood ids here to forget to update.
+    var pkgDur = slotMinutes(s.session, s.mood, s.extras);
     // Send the full descriptive package name — this is what the POS/booking
     // calendar reads and parses correctly. (The Review screen shows a
     // shorter "CBE - price - name" label to the client instead; that's
@@ -851,7 +848,24 @@
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && state.showDresses) setState({ showDresses: false }); });
 
-  render();
+  // Fetch the Look Lab from the "Look Lab Parts" tab, then draw once.
+  // loadLookLab always calls back — within 3.5 seconds at the outside — with
+  // the best data it could get, so this can't leave the page blank. Drawing
+  // once rather than redrawing on arrival means no price ever changes under
+  // anyone's eyes mid-read.
+  loadLookLab(function (source) {
+    render();
+    // A quiet marker so the source is checkable without cluttering the page:
+    // run  document.body.dataset.llSource  in the console, or look at the
+    // element with id "ll-source" if one exists.
+    try {
+      document.body.setAttribute('data-ll-source', source);
+      var badge = document.getElementById('ll-source');
+      if (badge) badge.textContent = source === 'sheet' ? 'live from the sheet'
+                : source === 'cache' ? 'from the sheet (cached)'
+                : 'built-in prices';
+    } catch (e) {}
+  });
 })();
 </script>
 </body>
