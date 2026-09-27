@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Your Look · ClickLounge Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --slate:#2f4f4f; --teal:#51897d; --gold:#d79068; --cream:#f5f0e8;
+    --text:#1e3333; --muted:#6b8080; --white:#ffffff; --light:#f4f7f6; --light2:#e4ebe9;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',system-ui,sans-serif; color:var(--text); background:var(--light);
+         -webkit-font-smoothing:antialiased; line-height:1.5; }
+  a { color:inherit; }
+
+  .hero { background:linear-gradient(160deg,#2f4f4f,#3d6560); color:var(--cream);
+          padding:34px 20px 30px; text-align:center; }
+  .brand { font-family:'Poppins',sans-serif; font-size:11px; font-weight:700;
+           letter-spacing:.22em; text-transform:uppercase; opacity:.75; }
+  .hero h1 { font-family:'Poppins',sans-serif; font-size:26px; font-weight:800;
+             margin-top:10px; line-height:1.2; }
+  .hero .combo { font-size:13px; margin-top:8px; color:var(--gold); font-weight:700; }
+  .hero .for { font-size:12px; margin-top:12px; opacity:.8; }
+
+  .wrap { max-width:640px; margin:0 auto; padding:0 16px 56px; }
+  .card { background:var(--white); border:1px solid var(--light2); border-radius:14px;
+          padding:22px 20px; margin-top:-18px; position:relative; box-shadow:0 8px 28px rgba(47,79,79,.08); }
+
+  .g { margin-bottom:20px; }
+  .g:last-of-type { margin-bottom:6px; }
+  .g-t { font-family:'Poppins',sans-serif; font-size:10px; font-weight:700; letter-spacing:.12em;
+         text-transform:uppercase; color:var(--teal); margin-bottom:9px; }
+  .i { display:flex; gap:10px; font-size:14px; line-height:1.5; margin-bottom:7px; align-items:flex-start; }
+  .i .tick { color:var(--gold); font-weight:700; flex-shrink:0; }
+
+  .total { border-top:2px solid var(--light2); margin-top:20px; padding-top:16px;
+           display:flex; align-items:baseline; justify-content:space-between; }
+  .total .l { font-family:'Poppins',sans-serif; font-size:15px; font-weight:800; }
+  .total .v { font-family:'Poppins',sans-serif; font-size:28px; font-weight:800; color:var(--gold); }
+  .fold { margin-top:12px; }
+  .fold summary { font-size:12px; color:var(--muted); cursor:pointer; list-style:none; user-select:none; }
+  .fold summary::-webkit-details-marker { display:none; }
+  .fold summary::before { content:'\25b8  '; }
+  .fold[open] summary::before { content:'\25be  '; }
+  .line { display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted);
+          padding:5px 0; border-bottom:1px dashed var(--light2); }
+  .line:last-child { border-bottom:none; }
+
+  .cta { display:block; text-align:center; background:var(--gold); color:#fff; text-decoration:none;
+         font-family:'Poppins',sans-serif; font-weight:700; font-size:15px; padding:15px;
+         border-radius:10px; margin-top:22px; }
+  .note { font-size:11.5px; color:var(--muted); text-align:center; margin-top:14px; line-height:1.55; }
+  .foot { text-align:center; font-size:11px; color:var(--muted); margin-top:26px; line-height:1.7; }
+  .bad { background:var(--white); border:1px solid var(--light2); border-radius:14px;
+         padding:30px 22px; margin-top:24px; text-align:center; }
+  .bad h2 { font-family:'Poppins',sans-serif; font-size:17px; margin-bottom:10px; }
+  .bad p { font-size:13.5px; color:var(--muted); }
+  @media (max-width:420px) { .hero h1 { font-size:22px; } .total .v { font-size:24px; } }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script src="looklab-data.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var BOOKING_URL = "https://hellotalentff-max.github.io/clicklounge_booking/";
+
+  function param(k) {
+    var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
+  }
+
+  function byId(list, id) {
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  function render() {
+    var app = document.getElementById('app');
+
+    var session  = byId(SESSIONS, param('s'));
+    var mood     = param('m') === 'double' ? DOUBLE : byId(MOODS, param('m'));
+    var keepsake = byId(KEEPSAKES, param('k'));
+    var gown     = param('g');
+    var forWhom  = param('n');
+
+    // A link that doesn't name all three choices can't be turned into an
+    // honest quote, so say so rather than showing a half-priced package.
+    if (!session || !mood || !keepsake) {
+      app.innerHTML =
+        '<div class="wrap"><div class="bad">' +
+          '<h2>This link looks incomplete</h2>' +
+          '<p>Ask ClickLounge Studio to send it again, or build your own look at ' +
+          '<a href="./">The Look Lab</a>.</p>' +
+        '</div></div>';
+      return;
+    }
+
+    var picked = {};
+    param('x').split(',').forEach(function (k) { if (k) picked[k] = true; });
+
+    var keepsakeP = keepsakePrice(session.id, keepsake.id, mood.id);
+    var total = session.price + mood.price + keepsakeP;
+
+    var lines = [
+      { l: session.name + ' Session', v: fmt(session.price) },
+      { l: mood.name,    v: mood.price === 0 ? 'Included' : '+' + fmt(mood.price) },
+      { l: keepsake.name, v: keepsakeP === 0 ? 'Included' : '+' + fmt(keepsakeP) }
+    ];
+    // The gown is free on Prestige, an add-on otherwise. Its rate lives in the
+    // dress system, so a shared link shows it as included rather than quoting
+    // a number that might have moved since the link was sent.
+    var gownFree = !!gown && session.id === 'Prestige';
+    if (gown) lines.push({ l: 'Gown: ' + gown + ' (House of Roan)', v: gownFree ? 'Included' : 'Quoted separately' });
+    EXTRAS.forEach(function (x) {
+      if (!picked[x.key]) return;
+      lines.push({ l: x.name, v: '+' + fmt(x.price) });
+      total += x.price;
+    });
+
+    var incl = buildInclusions({
+      session: session, mood: mood, keepsake: keepsake,
+      extras: picked, extraDefs: EXTRAS, gown: gown, gownFree: gownFree
+    });
+
+    var combo = session.name + ' + ' + mood.name + ' + ' + keepsake.name;
+    var bookHref = BOOKING_URL +
+      '?pkg=' + encodeURIComponent('The Look Lab: ' + combo) +
+      '&price=' + encodeURIComponent(total) +
+      '&desc=' + encodeURIComponent(combo + (gown ? ' · Gown: ' + gown : '')) +
+      '&dur=' + encodeURIComponent((session.dur || 60) +
+                 (mood.id === 'double' ? 30 : (mood.id === 'coatcode' || mood.id === 'angelic' ? 10 : 0)) +
+                 (picked.time ? 15 : 0));
+
+    app.innerHTML =
+      '<div class="hero">' +
+        '<div class="brand">ClickLounge Studio &middot; Antipolo City</div>' +
+        '<h1>Your Look</h1>' +
+        '<div class="combo">' + esc(combo) + '</div>' +
+        (forWhom ? '<div class="for">Prepared for ' + esc(forWhom) + '</div>' : '') +
+      '</div>' +
+      '<div class="wrap"><div class="card">' +
+        incl.groups.map(function (g) {
+          return '<div class="g"><div class="g-t">' + esc(g.title) + '</div>' +
+            g.items.map(function (i) {
+              return '<div class="i"><span class="tick">✓</span><span>' + esc(i) + '</span></div>';
+            }).join('') + '</div>';
+        }).join('') +
+        '<div class="total"><span class="l">Your total</span><span class="v">' + fmt(total) + '</span></div>' +
+        '<details class="fold"><summary>See how that adds up</summary><div style="margin-top:10px;">' +
+          lines.map(function (li) {
+            return '<div class="line"><span>' + esc(li.l) + '</span><span>' + li.v + '</span></div>';
+          }).join('') +
+        '</div></details>' +
+        '<a class="cta" href="' + bookHref + '">Book This Look &rarr;</a>' +
+        '<p class="note">Prices in Philippine Peso (&#8369;). Edited photos have a 5&ndash;7 business day lead time.' +
+        (gown && !gownFree ? ' Your gown is quoted separately by House of Roan.' : '') + '</p>' +
+      '</div>' +
+      '<div class="foot">Questions? Message us and we\'ll walk you through it.<br>' +
+        '<a href="./">Build a different look &rarr;</a></div>' +
+      '</div>';
+
+    document.title = 'Your Look — ' + combo + ' · ClickLounge Studio';
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
