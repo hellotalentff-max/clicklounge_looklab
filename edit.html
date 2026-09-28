@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Look Lab Editor · ClickLounge Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--slate:#2f4f4f;--teal:#51897d;--teal-dk:#3d6560;--gold:#d79068;--cream:#f5f0e8;
+        --text:#1e3333;--muted:#6b8080;--white:#fff;--light:#f4f7f6;--line:#e4ebe9;--bad:#a0452c;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',system-ui,sans-serif;color:var(--text);background:var(--light);line-height:1.5;}
+  h1,h2,h3,.f{font-family:'Poppins',sans-serif;}
+
+  .bar{background:linear-gradient(160deg,#2f4f4f,#3d6560);color:var(--cream);padding:14px 20px;
+       display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+  .bar h1{font-size:16px;font-weight:800;}
+  .bar .sp{flex:1;}
+  .badge{font-size:11px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.15);}
+  .badge.ok{background:rgba(129,199,132,.25);} .badge.warn{background:rgba(215,144,104,.3);}
+  .badge.bad{background:rgba(224,120,96,.35);}
+  .dirty{font-size:12px;color:var(--gold);font-weight:700;}
+
+  button{font-family:inherit;font-size:13px;cursor:pointer;border-radius:8px;border:1.5px solid transparent;padding:9px 14px;}
+  .b1{background:var(--gold);color:#fff;font-weight:700;}
+  .b2{background:transparent;color:inherit;border-color:currentColor;}
+  .b3{background:var(--white);color:var(--slate);border-color:var(--line);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+
+  .wrap{display:grid;grid-template-columns:230px minmax(0,1fr) 300px;gap:16px;padding:16px;align-items:start;}
+  @media(max-width:1100px){.wrap{grid-template-columns:200px minmax(0,1fr);} .side{grid-column:1/-1;}}
+  @media(max-width:720px){.wrap{grid-template-columns:1fr;}}
+
+  .panel{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .panel h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:10px;}
+
+  .grp{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+       margin:12px 0 5px;font-family:'Poppins',sans-serif;font-weight:700;}
+  .grp:first-child{margin-top:0;}
+  .item{display:flex;align-items:center;gap:7px;width:100%;text-align:left;background:none;border:none;
+        padding:7px 9px;border-radius:8px;font-size:13px;color:var(--text);}
+  .item:hover{background:var(--light);}
+  .item.on{background:var(--teal);color:#fff;}
+  .item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .item .off{font-size:10px;opacity:.65;}
+  .item.new{color:var(--teal);font-weight:700;}
+  .item.on .off{opacity:.8;}
+
+  label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin:12px 0 4px;}
+  label .hint{font-weight:400;text-transform:none;letter-spacing:0;}
+  input[type=text],input[type=number],select,textarea{width:100%;font-family:inherit;font-size:13.5px;
+    padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;color:var(--text);background:var(--white);}
+  textarea{resize:vertical;line-height:1.55;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:620px){.two,.three{grid-template-columns:1fr;}}
+  .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;}
+  .chk input{width:auto;}
+  .sec{border-top:1px solid var(--line);margin-top:18px;padding-top:4px;}
+  .sec h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-top:14px;}
+  .note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .warn{font-size:12px;color:var(--bad);margin-top:8px;}
+
+  /* the tile, as the Look Lab draws it */
+  .tile{border:1.5px solid var(--line);border-radius:12px;padding:14px;background:var(--white);}
+  .tile .e{font-size:24px;}
+  .tile .n{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;margin-top:4px;}
+  .tile .s{font-size:12px;color:var(--muted);}
+  .tile .p{font-size:13px;font-weight:700;color:var(--gold);margin-top:6px;}
+  .tile ul{list-style:none;margin-top:9px;}
+  .tile li{font-size:12px;color:var(--text);padding-left:15px;position:relative;margin-bottom:3px;}
+  .tile li:before{content:'✓';position:absolute;left:0;color:var(--gold);}
+  .g-t{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);
+       margin:12px 0 5px;font-family:'Poppins',sans-serif;font-weight:700;}
+  .g-i{font-size:12.5px;padding-left:14px;position:relative;margin-bottom:3px;}
+  .g-i:before{content:'✓';position:absolute;left:0;color:var(--gold);}
+
+  .gate{max-width:380px;margin:60px auto;background:var(--white);border:1px solid var(--line);
+        border-radius:14px;padding:28px 24px;text-align:center;}
+  .gate h2{font-size:17px;margin-bottom:6px;}
+  .gate p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+  .gate input{text-align:center;letter-spacing:.1em;}
+  .gate button{width:100%;margin-top:12px;}
+  .gate .err{color:var(--bad);font-size:12.5px;margin-top:10px;}
+  .hidden{display:none!important;}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--slate);color:#fff;
+         padding:11px 18px;border-radius:10px;font-size:13px;z-index:50;max-width:90vw;}
+  .toast.bad{background:var(--bad);}
+</style>
+</head>
+<body>
+
+<!-- ── passphrase ────────────────────────────────────────────── -->
+<div id="gate" class="gate">
+  <h2>Look Lab Editor</h2>
+  <p>This page edits live prices. Type the studio passphrase.</p>
+  <input type="password" id="pin" autocomplete="current-password" placeholder="passphrase">
+  <button class="b1" id="go">Unlock</button>
+  <div class="err hidden" id="gate-err"></div>
+  <p class="note" style="margin-top:16px;">Not set up yet? In the Apps Script editor run
+    <code>setLookLabPin('something only you know')</code> once.</p>
+</div>
+
+<!-- ── the editor ────────────────────────────────────────────── -->
+<div id="app" class="hidden">
+  <div class="bar">
+    <h1>✨ Look Lab Editor</h1>
+    <span class="badge" id="src">loading…</span>
+    <span class="dirty" id="dirty"></span>
+    <span class="sp"></span>
+    <button class="b2" id="reload">Reload from sheet</button>
+    <button class="b1" id="save">💾 Save all</button>
+  </div>
+
+  <div class="wrap">
+    <div class="panel">
+      <h2>Parts</h2>
+      <div id="list"></div>
+    </div>
+
+    <div class="panel" id="form"></div>
+
+    <div class="panel side">
+      <h2>How it will look</h2>
+      <div id="preview"></div>
+    </div>
+  </div>
+</div>
+
+<script src="looklab-data.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var URL_ = (typeof LOOKLAB_URL !== 'undefined' && LOOKLAB_URL) || '';
+  var TOKEN = '';           // the hour token, not the passphrase
+  var PIN = '';
+  var HEAD = [];            // the tab's column headers, in order
+  var ROWS = [];            // one object per row, keyed by header
+  var SEL = -1, DIRTY = false;
+
+  var TYPES = ['session', 'mood', 'keepsake', 'add-on'];
+  var C = {                 // the columns this page manages
+    part:'Part', type:'Type', id:'Id', emoji:'Emoji', tag:'Tagline', price:'Price',
+    pp:'Prestige Price', free:'Free With', only:'Only With', not:'Not With',
+    mins:'Minutes', dress:'Premium Dress', bullets:'Client Bullets',
+    match:'Match Words', edits:'Edited Photos', mini:'Mini Keepsake Set',
+    p8:'8x24 Portrait', frames:'Frames', todos:'To-Dos', active:'Active'
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function esc2(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                       .replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function toast(msg, bad) {
+    var t = document.createElement('div');
+    t.className = 'toast' + (bad ? ' bad' : ''); t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, bad ? 7000 : 3500);
+  }
+
+  // ── the hour token ───────────────────────────────────────────
+  // The passphrase never leaves this page. What travels is a hash of it
+  // plus the current hour, so a link captured from a log or a history is
+  // useless within the hour and the passphrase itself is nowhere in it.
+  function makeToken(pin) {
+    var bucket = Math.floor(Date.now() / 3600000);
+    var bytes = new TextEncoder().encode(pin + '|' + bucket);
+    return crypto.subtle.digest('SHA-256', bytes).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return ('0' + b.toString(16)).slice(-2); }).join('');
+    });
+  }
+
+  function call(action, extra) {
+    return new Promise(function (res) {
+      var body = { action: action };
+      Object.keys(extra || {}).forEach(function (k) { body[k] = extra[k]; });
+      var cb = '__e' + Date.now() + Math.floor(Math.random() * 1000);
+      var timer = setTimeout(function () {
+        res({ ok: false, error: 'No answer from the script — check the deployment.' });
+        try { delete window[cb]; } catch (e) {}
+      }, 25000);
+      window[cb] = function (d) { clearTimeout(timer); res(d); try { delete window[cb]; } catch (e) {} };
+      var s = document.createElement('script');
+      s.src = URL_ + '?d=' + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(body))))) +
+              '&callback=' + cb;
+      s.onerror = function () { clearTimeout(timer); res({ ok: false, error: 'Could not reach the script.' }); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // ── unlock ───────────────────────────────────────────────────
+  function unlock() {
+    var pin = $('pin').value;
+    if (!pin) return;
+    if (!window.crypto || !crypto.subtle) {
+      $('gate-err').textContent = 'This browser will not do the security step over an insecure ' +
+        'connection. Open the page over https.';
+      $('gate-err').classList.remove('hidden');
+      return;
+    }
+    $('go').disabled = true; $('go').textContent = 'Checking…';
+    makeToken(pin).then(function (tok) {
+      TOKEN = tok; PIN = pin;
+      return call('getLookLabRows', { token: tok });
+    }).then(function (r) {
+      $('go').disabled = false; $('go').textContent = 'Unlock';
+      if (!r || !r.ok) {
+        $('gate-err').textContent = (r && r.error) || 'Something went wrong.';
+        $('gate-err').classList.remove('hidden');
+        return;
+      }
+      HEAD = r.head; ROWS = r.rows;
+      try { sessionStorage.setItem('ll_pin', pin); } catch (e) {}
+      $('gate').classList.add('hidden'); $('app').classList.remove('hidden');
+      SEL = ROWS.length ? 0 : -1;
+      refreshSource(); draw();
+    });
+  }
+  $('go').addEventListener('click', unlock);
+  $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') unlock(); });
+  try {
+    var saved = sessionStorage.getItem('ll_pin');
+    if (saved) { $('pin').value = saved; unlock(); }
+  } catch (e) {}
+
+  function refreshSource() {
+    call('getLookLab').then(function (r) {
+      var b = $('src');
+      if (!r || !r.ok) { b.textContent = 'script not answering'; b.className = 'badge bad'; return; }
+      if (r.source === 'sheet') {
+        b.textContent = 'live · ' + r.sessions.length + ' sessions, ' +
+          (r.moods.length + (r.double ? 1 : 0)) + ' moods, ' + r.keepsakes.length + ' keepsakes, ' +
+          r.extras.length + ' add-ons';
+        b.className = 'badge ok';
+      } else {
+        b.textContent = 'page is using built-in prices — ' + (r.reason || '');
+        b.className = 'badge warn';
+      }
+    });
+  }
+
+  // ── the list ─────────────────────────────────────────────────
+  function drawList() {
+    var h = '';
+    TYPES.forEach(function (t) {
+      h += '<div class="grp">' + (t === 'add-on' ? 'Add-ons' : t + 's') + '</div>';
+      ROWS.forEach(function (r, i) {
+        if (String(r[C.type] || '').toLowerCase() !== t) return;
+        var off = String(r[C.active] || '').toLowerCase() === 'no';
+        h += '<button class="item' + (i === SEL ? ' on' : '') + '" data-i="' + i + '">' +
+             '<span>' + esc2(r[C.emoji] || '•') + '</span>' +
+             '<span class="nm">' + esc2(r[C.part] || '(no name)') + '</span>' +
+             (off ? '<span class="off">off</span>' : '') + '</button>';
+      });
+      h += '<button class="item new" data-add="' + t + '">+ add a ' + t + '</button>';
+    });
+    $('list').innerHTML = h;
+  }
+
+  $('list').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.add) {
+      var o = {};
+      HEAD.forEach(function (k) { o[k] = ''; });
+      o[C.type] = b.dataset.add; o[C.active] = 'yes'; o[C.price] = 0; o[C.edits] = 0;
+      ROWS.push(o); SEL = ROWS.length - 1; mark(true); draw();
+      setTimeout(function () { var f = $('form').querySelector('input'); if (f) f.focus(); }, 30);
+      return;
+    }
+    SEL = +b.dataset.i; draw();
+  });
+
+  // ── the form ─────────────────────────────────────────────────
+  function field(key, label, hint, kind, opts) {
+    var r = ROWS[SEL], v = r[key] == null ? '' : r[key];
+    var lab = '<label>' + esc2(label) + (hint ? ' <span class="hint">— ' + esc2(hint) + '</span>' : '') + '</label>';
+    if (kind === 'textarea')
+      return lab + '<textarea rows="' + (opts || 5) + '" data-k="' + esc2(key) + '">' + esc2(v) + '</textarea>';
+    if (kind === 'select') {
+      return lab + '<select data-k="' + esc2(key) + '">' + opts.map(function (o) {
+        return '<option value="' + esc2(o[0]) + '"' +
+          (String(v).toLowerCase() === String(o[0]).toLowerCase() ? ' selected' : '') + '>' +
+          esc2(o[1]) + '</option>'; }).join('') + '</select>';
+    }
+    if (kind === 'number')
+      return lab + '<input type="number" step="1" data-k="' + esc2(key) + '" value="' + esc2(v) + '">';
+    return lab + '<input type="text" data-k="' + esc2(key) + '" value="' + esc2(v) + '">';
+  }
+
+  function drawForm() {
+    if (SEL < 0 || !ROWS[SEL]) { $('form').innerHTML = '<h2>Nothing selected</h2>'; return; }
+    var r = ROWS[SEL], type = String(r[C.type] || '').toLowerCase();
+    var isAdd = type === 'add-on', isKeep = type === 'keepsake', isSess = type === 'session';
+
+    var h = '<h2>' + esc2(r[C.part] || 'New ' + type) + '</h2>';
+
+    h += '<div class="two">' +
+      field(C.part, 'Name', 'what the client reads') +
+      field(C.type, 'Kind', '', 'select', TYPES.map(function (t) { return [t, t]; })) +
+    '</div>';
+
+    h += '<div class="two">' +
+      field(C.id, 'Id', 'used in client links — don\'t change it once links are out') +
+      field(C.price, isAdd ? 'Price' : 'Price added', '0 = included', 'number') +
+    '</div>';
+
+    if (!isAdd) {
+      h += '<div class="three">' +
+        field(C.emoji, 'Emoji') +
+        field(C.mins, isSess ? 'Slot minutes' : 'Extra minutes', '', 'number') +
+        field(C.dress, 'Premium Dress', '', 'select', [
+          ['', '— leave to the session —'], ['included', 'included, free'],
+          ['add-on', 'offered, client pays'], ['no', 'not offered']]) +
+      '</div>';
+      h += field(C.tag, 'Tagline', 'the small line under the name');
+      h += field(C.bullets, 'What the client gets', 'one per line', 'textarea', 6);
+      h += '<p class="note">Lines phrased <b>"20-minute"</b>, <b>"3 edited photos"</b>, ' +
+           '<b>"1 outfit change"</b>, <b>"2 light styles"</b> are added up across the three ' +
+           'choices in the client summary. Anything else appears as its own line.</p>';
+    } else {
+      h += '<div class="two">' + field(C.mins, 'Extra minutes', '', 'number') +
+           field(C.match, 'Words in the booking note', 'how the job spots it') + '</div>';
+    }
+
+    if (isKeep) {
+      h += '<div class="sec"><h3>When it changes price or hides</h3>';
+      h += '<div class="two">' +
+        field(C.pp, 'Price with Prestige', 'blank = same price', 'number') +
+        field(C.free, 'Free with', 'a part that already includes it') +
+      '</div><div class="two">' +
+        field(C.only, 'Only offered with') +
+        field(C.not, 'Hidden when picked with') +
+      '</div></div>';
+    }
+
+    if (!isAdd) {
+      h += '<div class="sec"><h3>What the job owes</h3>';
+      h += '<div class="two">' +
+        field(C.edits, 'Edited photos this adds', '', 'number') +
+        field(C.match, 'Old names', 'so bookings taken before a rename still match') +
+      '</div>';
+      h += '<div class="two">' +
+        field(C.mini, 'Mini Keepsake set', '', 'select', [['', 'no'], ['yes', 'yes']]) +
+        field(C.p8, '8×24 portrait', '', 'select', [['', 'no'], ['yes', 'yes']]) +
+      '</div>';
+      h += field(C.todos, 'Prep and to-dos', 'one per line', 'textarea', 4);
+      h += field(C.frames, 'Framing jobs', 'one per line', 'textarea', 2);
+      h += '</div>';
+    } else {
+      h += field(C.todos, 'To-do this adds', 'one per line', 'textarea', 2);
+    }
+
+    h += '<div class="chk"><input type="checkbox" id="act" ' +
+         (String(r[C.active] || '').toLowerCase() === 'no' ? '' : 'checked') +
+         '><label for="act" style="margin:0;">Offered on the Look Lab</label></div>';
+    h += '<p class="note">Turning a part off hides it from the page but keeps it here, so a booking ' +
+         'already taken under it still builds the right checklist. Nothing is ever deleted.</p>';
+
+    // The warning lives in its own element and is refreshed on every
+    // keystroke. Redrawing the whole form to update it would take the focus
+    // out of the field being typed in, which is how you end up with a
+    // warning nobody ever sees because it only appears once it's too late.
+    h += '<p class="warn" id="warn"></p>';
+
+    $('form').innerHTML = h;
+    drawWarn();
+  }
+
+  function drawWarn() {
+    var el = $('warn'); if (!el || SEL < 0) return;
+    var w = validate(ROWS[SEL]);
+    el.textContent = w ? '⚠ ' + w : '';
+    el.style.display = w ? '' : 'none';
+  }
+
+  function validate(r) {
+    var type = String(r[C.type] || '').toLowerCase();
+    if (!String(r[C.part] || '').trim()) return 'This part has no name.';
+    if (TYPES.indexOf(type) === -1) return 'Pick a kind.';
+    if (String(r[C.price]).trim() === '') return 'No price — the page will ignore this part entirely.';
+    if (type !== 'add-on' && !String(r[C.bullets] || '').trim())
+      return 'No client bullets — the page will refuse the whole sheet until this has some.';
+    var id = String(r[C.id] || '').trim().toLowerCase();
+    if (id && ROWS.filter(function (x) { return String(x[C.id] || '').trim().toLowerCase() === id; }).length > 1)
+      return 'Another part already uses the id "' + id + '".';
+    return '';
+  }
+
+  $('form').addEventListener('input', function (e) {
+    var k = e.target.dataset.k;
+    if (k) { ROWS[SEL][k] = e.target.value; mark(true); drawList(); drawPreview(); drawWarn(); }
+    if (e.target.id === 'act') { ROWS[SEL][C.active] = e.target.checked ? 'yes' : 'no'; mark(true); drawList(); }
+  });
+  $('form').addEventListener('change', function (e) {
+    if (e.target.tagName === 'SELECT' || e.target.id === 'act') {
+      if (e.target.dataset.k) ROWS[SEL][e.target.dataset.k] = e.target.value;
+      if (e.target.id === 'act') ROWS[SEL][C.active] = e.target.checked ? 'yes' : 'no';
+      mark(true); draw();
+    }
+  });
+
+  // ── the preview ──────────────────────────────────────────────
+  // Built from the form as it stands, so unsaved edits show. It calls the
+  // SAME buildInclusions the two live pages use, rather than a copy — a
+  // preview that agreed with nothing would be worse than no preview.
+  function toPart(r) {
+    return { id: String(r[C.id] || '').trim() || 'preview',
+             name: String(r[C.part] || ''), emoji: String(r[C.emoji] || ''),
+             sub: String(r[C.tag] || ''), price: parseFloat(String(r[C.price]).replace(/[^0-9.\-]/g, '')) || 0,
+             dur: parseFloat(r[C.mins]) || 60, mins: parseFloat(r[C.mins]) || 0,
+             bullets: String(r[C.bullets] || '').split(/[;\n]/).map(function (x) { return x.trim(); })
+                        .filter(Boolean) };
+  }
+
+  function drawPreview() {
+    if (SEL < 0) { $('preview').innerHTML = ''; return; }
+    var r = ROWS[SEL], type = String(r[C.type] || '').toLowerCase();
+    var p = toPart(r);
+    var h = '<div class="tile">' +
+      '<div class="e">' + esc2(p.emoji || '•') + '</div>' +
+      '<div class="n">' + esc2(p.name || 'Untitled') + '</div>' +
+      (p.sub ? '<div class="s">' + esc2(p.sub) + '</div>' : '') +
+      '<div class="p">' + (p.price === 0 ? 'Included' : (type === 'session' ? '' : '+') + fmt(p.price)) + '</div>' +
+      (p.bullets.length ? '<ul>' + p.bullets.map(function (b) {
+        return '<li>' + esc2(b) + '</li>'; }).join('') + '</ul>' : '') +
+    '</div>';
+
+    if (type !== 'add-on' && p.bullets.length) {
+      // Show it inside a real build, because the numbers only mean something
+      // once they are added to the other two choices.
+      var base = LL_BUILTIN;
+      var sess = type === 'session' ? p : base.sessions[2];
+      var mood = type === 'mood' ? p : base.moods[1];
+      var keep = type === 'keepsake' ? p : base.keepsakes[0];
+      var incl = buildInclusions({ session: sess, mood: mood, keepsake: keep,
+                                   extras: {}, extraDefs: base.extras });
+      h += '<p class="note" style="margin-top:14px;">With <b>' + esc2(sess.name) + ' + ' +
+           esc2(mood.name) + ' + ' + esc2(keep.name) + '</b>, a client reads:</p>';
+      h += incl.groups.map(function (g) {
+        return '<div class="g-t">' + esc2(g.title) + '</div>' +
+          g.items.map(function (i) { return '<div class="g-i">' + esc2(i) + '</div>'; }).join('');
+      }).join('');
+      var total = (sess.price || 0) + (mood.price || 0) + (keep.price || 0);
+      h += '<div class="g-t" style="margin-top:12px;">Total</div><div class="g-i">' + fmt(total) + '</div>';
+    }
+    $('preview').innerHTML = h;
+  }
+
+  function draw() { drawList(); drawForm(); drawPreview(); }
+  function mark(on) { DIRTY = on; $('dirty').textContent = on ? '● unsaved' : ''; }
+
+  // ── save ─────────────────────────────────────────────────────
+  $('save').addEventListener('click', function () {
+    for (var i = 0; i < ROWS.length; i++) {
+      var w = validate(ROWS[i]);
+      if (w) { SEL = i; draw(); toast(ROWS[i][C.part] + ': ' + w, true); return; }
+    }
+    $('save').disabled = true; $('save').textContent = 'Saving…';
+    // Re-make the token: the page may have been open across an hour boundary.
+    makeToken(PIN).then(function (tok) {
+      TOKEN = tok;
+      return call('saveLookLab', { token: tok, rows: JSON.stringify(ROWS) });
+    }).then(function (r) {
+      $('save').disabled = false; $('save').textContent = '💾 Save all';
+      if (!r || !r.ok) { toast((r && r.error) || 'Save failed.', true); return; }
+      mark(false);
+      if (r.source === 'sheet') {
+        toast('Saved — ' + r.updated + ' updated, ' + r.added + ' added. The Look Lab is live on it.');
+      } else {
+        toast('Saved, BUT the page is still on built-in prices: ' + (r.reason || ''), true);
+      }
+      refreshSource();
+    });
+  });
+
+  $('reload').addEventListener('click', function () {
+    if (DIRTY && !confirm('Reload from the sheet and lose your unsaved changes?')) return;
+    call('getLookLabRows', { token: TOKEN }).then(function (r) {
+      if (!r || !r.ok) { toast((r && r.error) || 'Could not reload.', true); return; }
+      HEAD = r.head; ROWS = r.rows; SEL = ROWS.length ? Math.min(SEL, ROWS.length - 1) : -1;
+      mark(false); draw(); refreshSource();
+      toast('Reloaded from the sheet.');
+    });
+  });
+
+  window.addEventListener('beforeunload', function (e) {
+    if (DIRTY) { e.preventDefault(); e.returnValue = ''; }
+  });
+})();
+</script>
+</body>
+</html>

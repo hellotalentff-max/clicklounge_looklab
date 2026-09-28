@@ -33,9 +33,9 @@ var LL_TIMEOUT   = 3500;             // after this, stop waiting and use what we
 // ── the fallback: what the Look Lab said on 2026-09-27 ─────────
 var LL_BUILTIN = {
   sessions: [
-    { id: 'Standard', emoji: '📸', name: 'Standard', price: 1200, dur: 30, sub: 'A quick portrait session', bullets: ['10-minute photographer session', '1 background', 'Digital copies', 'Bring your own outfit or rent Premium Dress'] },
-    { id: 'Signature', emoji: '✨', name: 'Signature', price: 3000, dur: 60, sub: 'For clients who want photographer guidance', bullets: ['20-minute photographer session', '2 light styles', '1 outfit change', 'Optional: Use of available outfits', '3 edited photos*', 'Basic hair & makeup'] },
-    { id: 'Prestige', emoji: '👑', name: 'Prestige', price: 5000, dur: 90, sub: 'The full portrait experience', bullets: ['45-minute guided shoot', 'Unlimited shots', '2 light styles', 'up to 2 outfit change', 'FREE use of 1 Premium Dress', 'Optional: Use of available outfits', '5 edited photos*', 'Glam Make up look', '8×24 portrait included'] }
+    { id: 'Standard', emoji: '📸', name: 'Standard', price: 1200, dur: 30, dress: 'add-on', sub: 'A quick portrait session', bullets: ['10-minute photographer session', '1 background', 'Digital copies', 'Bring your own outfit or rent Premium Dress'] },
+    { id: 'Signature', emoji: '✨', name: 'Signature', price: 3000, dur: 60, dress: 'add-on', sub: 'For clients who want photographer guidance', bullets: ['20-minute photographer session', '2 light styles', '1 outfit change', 'Optional: Use of available outfits', '3 edited photos*', 'Basic hair & makeup'] },
+    { id: 'Prestige', emoji: '👑', name: 'Prestige', price: 5000, dur: 90, dress: 'included', sub: 'The full portrait experience', bullets: ['45-minute guided shoot', 'Unlimited shots', '2 light styles', 'up to 2 outfit change', 'FREE use of 1 Premium Dress', 'Optional: Use of available outfits', '5 edited photos*', 'Glam Make up look', '8×24 portrait included'] }
   ],
   moods: [
     { id: 'styleshots', emoji: '✨', name: 'Styleshots', sub: 'Modern / Clean / Confident', price: 0, mins: 0, bullets: ['Photographer-guided posing', 'Contemporary lighting', 'Personalized portrait direction', 'Standard lighting'] },
@@ -100,6 +100,23 @@ function llNames(rule, moodId) {
   if (want === String(moodId || '').toLowerCase()) return true;
   return !!m && want === String(m.name || '').toLowerCase();
 }
+
+// ── 👗 the Premium Dress ───────────────────────────────────────
+// Each part says what it does about the gown, in its "Premium Dress" cell:
+//   included — comes with this part, free
+//   add-on   — offered, at the House of Roan rate
+//   no       — don't offer a gown with this part at all
+// A mood saying "no" wins, because a mood can be one a gown makes no sense
+// with. Otherwise the session decides, and the default is to offer it.
+function dressRule(sessionId, moodId) {
+  var m = llMood(moodId), s = llFind(SESSIONS, sessionId);
+  if (m && m.dress === 'no') return 'no';
+  if (s && s.dress) return s.dress;
+  if (m && m.dress) return m.dress;
+  return 'add-on';
+}
+function gownIncluded(sessionId, moodId) { return dressRule(sessionId, moodId) === 'included'; }
+function gownOffered(sessionId, moodId)  { return dressRule(sessionId, moodId) !== 'no'; }
 
 function keepsakePrice(sessionId, keepsakeId, moodId) {
   var k = llFind(KEEPSAKES, keepsakeId);
@@ -434,6 +451,7 @@ function llNow() {
 
 if (typeof module !== 'undefined') module.exports = {
   llNow: llNow, llMood: llMood, llFind: llFind,
+  dressRule: dressRule, gownIncluded: gownIncluded, gownOffered: gownOffered,
   buildInclusions: buildInclusions, keepsakePrice: keepsakePrice,
   keepsakeOptions: keepsakeOptions, slotMinutes: slotMinutes,
   extraPrice: extraPrice, extraMins: extraMins, llValid: llValid,

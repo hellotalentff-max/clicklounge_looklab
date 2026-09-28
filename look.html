@@ -116,7 +116,7 @@
     // The gown is free on Prestige, an add-on otherwise. Its rate lives in the
     // dress system, so a shared link shows it as included rather than quoting
     // a number that might have moved since the link was sent.
-    var gownFree = !!gown && session.id === 'Prestige';
+    var gownFree = !!gown && gownIncluded(session.id, mood.id);
     if (gown) lines.push({ l: 'Gown: ' + gown + ' (House of Roan)', v: gownFree ? 'Included' : 'Quoted separately' });
     EXTRAS.forEach(function (x) {
       if (!picked[x.key]) return;
