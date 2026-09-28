@@ -39,8 +39,8 @@ var LL_BUILTIN = {
   ],
   moods: [
     { id: 'styleshots', emoji: '✨', name: 'Styleshots', sub: 'Modern / Clean / Confident', price: 0, mins: 0, bullets: ['Photographer-guided posing', 'Contemporary lighting', 'Personalized portrait direction', 'Standard lighting'] },
-    { id: 'coatcode', emoji: '🖤', name: 'The Coat Code', sub: 'Luxury / Bold / Fashion', price: 800, mins: 10, noTimeWith: 'Standard', bullets: ['Prestige fur coat', 'Dark editorial lighting', 'High-fashion posing', 'Foil styling', '+10 mins shoot', '+2 edited photo'] },
-    { id: 'angelic', emoji: '🪽', name: 'Angelic Muse', sub: 'Ethereal / Feminine / Dreamy', price: 800, mins: 10, noTimeWith: 'Standard', bullets: ['Angel wings', 'Celestial lighting', 'Cloud or Foil Styling', '+10 mins shoot', '+2 edited photo'] }
+    { id: 'coatcode', emoji: '🖤', name: 'The Coat Code', sub: 'Luxury / Bold / Fashion', price: 800, mins: 10, minsBySession: 'Standard: 0', bullets: ['Prestige fur coat', 'Dark editorial lighting', 'High-fashion posing', 'Foil styling', '+10 mins shoot for Signature and Prestige Session', '+2 edited photo'] },
+    { id: 'angelic', emoji: '🪽', name: 'Angelic Muse', sub: 'Ethereal / Feminine / Dreamy', price: 800, mins: 10, minsBySession: 'Standard: 0', bullets: ['Angel wings', 'Celestial lighting', 'Cloud or Foil Styling', '+10 mins shoot for Signature and Prestige Session', '+2 edited photo'] }
   ],
   double: { id: 'double', emoji: '💫', name: 'Twofold', sub: 'Coat Code × Angelic Muse', price: 1800, mins: 30, bullets: ['Two completely different looks', 'Fur coat AND angel wings', '+10 mins time', 'Mini Keepsake included', '8×24in printed portrait', '+2 edited photos'] },
   keepsakes: [
@@ -118,23 +118,47 @@ function dressRule(sessionId, moodId) {
 function gownIncluded(sessionId, moodId) { return dressRule(sessionId, moodId) === 'included'; }
 function gownOffered(sessionId, moodId)  { return dressRule(sessionId, moodId) !== 'no'; }
 
-// Does this mood's extra shoot time apply to this session?
-// A mood's "+10 mins" is time added to a guided shoot. A Standard booking is
-// sold as a fixed ten minutes, so picking a look doesn't lengthen it — it
-// changes what happens during it. The exceptions live in the mood's
-// "No Extra Time With" cell, one or more session names, so this is a sheet
-// edit rather than a rule buried in three files.
-function moodTimeApplies(sessionId, moodId) {
+// How many extra minutes does this mood add to THIS session?
+//
+// A look's "+10 mins" is time added to a guided shoot, and a fixed-length
+// session like Standard doesn't get it. Rather than an on/off rule, the
+// mood's "Minutes By Session" cell holds a number per session:
+//
+//     Standard: 0; Signature: 10; Prestige: 15
+//     Standard, Signature: 0                    (one value, several sessions)
+//
+// Anything not named falls back to the mood's own Minutes. Returns null when
+// this session isn't named at all, which leaves today's behaviour exactly as
+// it was — the bullets decide, and nothing here interferes.
+function moodMinutesOverride(sessionId, moodId) {
   var m = llMood(moodId);
-  if (!m || !m.noTimeWith) return true;
+  if (!m || !m.minsBySession) return null;
   var s = llFind(SESSIONS, sessionId);
   var names = [String(sessionId || '').toLowerCase()];
   if (s && s.name) names.push(String(s.name).toLowerCase());
-  var listed = String(m.noTimeWith).split(/[;,\n]/).map(function (x) { return x.trim().toLowerCase(); });
-  for (var i = 0; i < listed.length; i++) {
-    if (listed[i] && names.indexOf(listed[i]) !== -1) return false;
+
+  var parts = String(m.minsBySession).split(/[;\n]/);
+  for (var i = 0; i < parts.length; i++) {
+    var bit = parts[i].trim();
+    if (!bit) continue;
+    var at = bit.lastIndexOf(':');
+    if (at === -1) continue;
+    var who = bit.slice(0, at).split(',').map(function (x) { return x.trim().toLowerCase(); });
+    var num = parseFloat(bit.slice(at + 1).replace(/[^0-9.\-]/g, ''));
+    if (isNaN(num)) continue;
+    for (var j = 0; j < who.length; j++) {
+      if (who[j] && names.indexOf(who[j]) !== -1) return num;
+    }
   }
-  return true;
+  return null;
+}
+
+// The minutes actually in force, whichever way they were set.
+function moodMinutes(sessionId, moodId) {
+  var o = moodMinutesOverride(sessionId, moodId);
+  if (o !== null) return o;
+  var m = llMood(moodId);
+  return (m && m.mins) || 0;
 }
 
 function keepsakePrice(sessionId, keepsakeId, moodId) {
@@ -168,7 +192,7 @@ function llFind2(list, key) {
 function slotMinutes(sessionId, moodId, picked) {
   var s = llFind(SESSIONS, sessionId), m = llMood(moodId);
   var mins = (s && s.dur) || 60;
-  if (m && moodTimeApplies(sessionId, moodId)) mins += m.mins || 0;
+  if (m) mins += moodMinutes(sessionId, moodId);
   Object.keys(picked || {}).forEach(function (k) { if (picked[k]) mins += extraMins(k); });
   return mins;
 }
@@ -323,11 +347,13 @@ function buildInclusions(opts) {
   var extraDefs= opts.extraDefs|| [];     // the EXTRAS table
   var gown     = opts.gown     || '';     // a gown name, if one was picked
   var gownFree = !!opts.gownFree;
-  // Whether this mood's extra shoot time counts for this session. Worked out
-  // by moodTimeApplies() and passed in, so the summary and the calendar slot
+  // An explicit per-session figure for this mood's extra minutes, or null to
+  // let its bullets speak for themselves as they always have. Worked out by
+  // moodMinutesOverride() and passed in, so the summary and the calendar slot
   // are answering the same question — a client reading "20-minute" while the
   // diary blocks 10 is the failure this exists to prevent.
-  var moodMins = opts.moodMinutes !== false;
+  var moodOver = (opts.moodMinutes === undefined || opts.moodMinutes === null)
+                   ? null : Number(opts.moodMinutes);
 
   // ── what we are counting ──
   var n = { mins: 0, edits: 0, outfits: 0, styles: 0 };
@@ -410,9 +436,13 @@ function buildInclusions(opts) {
   // ── the mood ──
   if (mood) {
     (mood.bullets || []).forEach(function (b) {
-      if (count(b, false, !moodMins)) return;
+      if (count(b, false, moodOver !== null)) return;
       once(look, b);
     });
+    // An explicit figure replaces whatever the bullets said, once — including
+    // when it is zero, which is how "this look does not lengthen a Standard
+    // shoot" ends up as a summary that simply doesn't mention extra time.
+    if (moodOver !== null && moodOver > 0) n.mins += moodOver;
   }
 
   // ── the keepsake ──
@@ -479,7 +509,8 @@ function llNow() {
 }
 
 if (typeof module !== 'undefined') module.exports = {
-  llNow: llNow, llMood: llMood, llFind: llFind, moodTimeApplies: moodTimeApplies,
+  llNow: llNow, llMood: llMood, llFind: llFind,
+  moodMinutes: moodMinutes, moodMinutesOverride: moodMinutesOverride,
   dressRule: dressRule, gownIncluded: gownIncluded, gownOffered: gownOffered,
   buildInclusions: buildInclusions, keepsakePrice: keepsakePrice,
   keepsakeOptions: keepsakeOptions, slotMinutes: slotMinutes,

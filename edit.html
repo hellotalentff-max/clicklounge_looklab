@@ -145,7 +145,7 @@
   var C = {                 // the columns this page manages
     part:'Part', type:'Type', id:'Id', emoji:'Emoji', tag:'Tagline', price:'Price',
     pp:'Prestige Price', free:'Free With', only:'Only With', not:'Not With',
-    mins:'Minutes', notime:'No Extra Time With', dress:'Premium Dress', bullets:'Client Bullets',
+    mins:'Minutes', notime:'Minutes By Session', dress:'Premium Dress', bullets:'Client Bullets',
     match:'Match Words', edits:'Edited Photos', mini:'Mini Keepsake Set',
     p8:'8x24 Portrait', frames:'Frames', todos:'To-Dos', active:'Active'
   };
@@ -316,11 +316,12 @@
           ['add-on', 'offered, client pays'], ['no', 'not offered']]) +
       '</div>';
       if (type === 'mood') {
-        h += field(C.notime, 'Does not lengthen',
-                   'sessions this look does not add its minutes to, comma separated');
-        h += '<p class="note">A fixed-length session like Standard stays its own length ' +
-             'whatever look is picked. Listing it here keeps the client summary and the ' +
-             'calendar block agreeing.</p>';
+        h += field(C.notime, 'Extra minutes by session',
+                   'e.g. Standard: 0; Prestige: 15');
+        h += '<p class="note">Overrides the Minutes above for the sessions you name. ' +
+             '<code>Standard: 0</code> means this look doesn\'t lengthen a Standard shoot; ' +
+             '<code>Standard, Signature: 0</code> sets two at once. Anything not named uses ' +
+             'Minutes. This keeps the client summary and the calendar block agreeing.</p>';
       }
       h += field(C.tag, 'Tagline', 'the small line under the name');
       h += field(C.bullets, 'What the client gets', 'one per line', 'textarea', 6);
@@ -444,7 +445,7 @@
       var keep = type === 'keepsake' ? p : base.keepsakes[0];
       var incl = buildInclusions({ session: sess, mood: mood, keepsake: keep,
                                    extras: {}, extraDefs: base.extras,
-                                   moodMinutes: moodTimeApplies(sess.id, mood.id) });
+                                   moodMinutes: moodMinutesOverride(sess.id, mood.id) });
       h += '<p class="note" style="margin-top:14px;">With <b>' + esc2(sess.name) + ' + ' +
            esc2(mood.name) + ' + ' + esc2(keep.name) + '</b>, a client reads:</p>';
       h += incl.groups.map(function (g) {

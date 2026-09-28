@@ -127,7 +127,7 @@
     var incl = buildInclusions({
       session: session, mood: mood, keepsake: keepsake,
       extras: picked, extraDefs: EXTRAS, gown: gown, gownFree: gownFree,
-      moodMinutes: moodTimeApplies(session.id, mood.id)
+      moodMinutes: moodMinutesOverride(session.id, mood.id)
     });
 
     var combo = session.name + ' + ' + mood.name + ' + ' + keepsake.name;
