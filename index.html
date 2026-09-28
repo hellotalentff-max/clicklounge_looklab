@@ -302,7 +302,9 @@
   }
 
   // ---- 👗 gown helpers ----
-  function dressCo() { return state.session === 'Prestige' ? 'CLS Prestige' : 'CLS Photographer'; }
+  // Which House of Roan rate card applies. A build whose gown is included
+  // is on the Prestige card; everything else pays the photographer rate.
+  function dressCo() { return gownIncluded(state.session, state.mood) ? 'CLS Prestige' : 'CLS Photographer'; }
   function dressSlug(n) { return String(n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function dressPhoto(d) {
     var m = /drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]+)/.exec(d.photo || '');
@@ -317,14 +319,16 @@
   function gownImg(d) { return '<img src="' + esc(dressPhoto(d)) + '" alt="' + esc(d.name) + '" loading="lazy" onerror="gownImgFail(this)">'; }
   function dressRateOf(d) {
     if (!d) return 0;
-    if (state.session === 'Prestige') return 0;                                    // Prestige: gown included
+    if (gownIncluded(state.session, state.mood)) return 0;                         // the part includes the gown
     var a = state.dressAvail && state.dressAvail.filter(function (x) { return x.name === d.name; })[0];
     if (a && a.rate != null) return a.rate;
     return d.photographerRate != null ? d.photographerRate : 0;                      // Package add-on price
   }
-  // The gown step shows everywhere except Prestige + Styleshots.
-  // Prestige includes the gown; Standard and Signature pay the Package add-on rate.
-  function gownOK(session, mood) { return !(session === 'Prestige' && mood === 'styleshots'); }
+  // Whether to offer the gown at all is now the "Premium Dress" cell on the
+  // session (and a mood can veto it). It used to be one hard-coded pairing —
+  // Prestige + Styleshots — which couldn't be changed without editing this
+  // file, and wasn't written down anywhere you could see.
+  function gownOK(session, mood) { return gownOffered(session, mood); }
   function pickedDress() {
     if (!state.dress || !state.dressList) return state.dress;
     return state.dressList.filter(function (x) { return x.name === state.dress.name; })[0] || state.dress;
