@@ -147,8 +147,13 @@
     pp:'Prestige Price', free:'Free With', only:'Only With', not:'Not With',
     mins:'Minutes', notime:'Minutes By Session', dress:'Premium Dress', bullets:'Client Bullets',
     match:'Match Words', edits:'Edited Photos', mini:'Mini Keepsake Set',
-    p8:'8x24 Portrait', frames:'Frames', todos:'To-Dos', active:'Active'
+    p8:'8x24 Portrait', frames:'Frames', todos:'To-Dos', active:'Active',
+    shoot:'Shoot Minutes', shootW:'Shoot Wording', bg:'Backgrounds', unl:'Unlimited Shots',
+    lights:'Light Styles', outf:'Outfit Changes', outfUp:'Outfit Up To', makeup:'Makeup Look',
+    dig:'Digital Copies', digW:'Digital Wording', setD:'Set Design', prints:'Prints',
+    frameW:'Frame Wording', xtra:'Extra Lines'
   };
+  var YESNO = [['', 'no'], ['yes', 'yes']];
 
   function $(id) { return document.getElementById(id); }
   function esc2(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -324,10 +329,62 @@
              'Minutes. This keeps the client summary and the calendar block agreeing.</p>';
       }
       h += field(C.tag, 'Tagline', 'the small line under the name');
-      h += field(C.bullets, 'What the client gets', 'one per line', 'textarea', 6);
-      h += '<p class="note">Lines phrased <b>"20-minute"</b>, <b>"3 edited photos"</b>, ' +
-           '<b>"1 outfit change"</b>, <b>"2 light styles"</b> are added up across the three ' +
-           'choices in the client summary. Anything else appears as its own line.</p>';
+
+      h += '<div class="sec"><h3>What the client gets</h3>';
+      h += '<p class="note">One thing per box. The card and the summary are both ' +
+           'built from these, so there is no wording to get right and the two can\'t ' +
+           'disagree.</p>';
+
+      h += '<div class="two">' +
+        field(C.shoot, isSess ? 'Shoot minutes' : 'Extra shoot minutes',
+              isSess ? 'what the client is told' : 'what this look adds', 'number') +
+        field(C.shootW, 'reads as',
+              isSess ? 'e.g. guided shoot' : 'e.g. shoot, or time', 'text') +
+      '</div>';
+      h += '<p class="note">' + (isSess
+        ? '<b>' + esc2((r[C.shoot] || 0) + '-minute ' + (r[C.shootW] || 'photographer session')) + '</b>'
+        : '<b>' + esc2('+' + (r[C.shoot] || 0) + ' mins ' + (r[C.shootW] || 'shoot')) + '</b>') +
+        ' — the calendar block is the Minutes box above, which is a different number.</p>';
+
+      h += '<div class="three">' +
+        field(C.lights, 'Light styles', '', 'number') +
+        field(C.outf, 'Outfit changes', '', 'number') +
+        field(C.outfUp, 'read as "up to"', '', 'select', YESNO) +
+      '</div>';
+      h += '<div class="three">' +
+        field(C.edits, 'Edited photos', 'also what the job asks for', 'number') +
+        field(C.bg, 'Backgrounds', '', 'number') +
+        field(C.unl, 'Unlimited shots', '', 'select', YESNO) +
+      '</div>';
+      h += '<div class="two">' +
+        field(C.makeup, 'Make-up look', 'e.g. Glam Make up look') +
+        field(C.dig, 'Digital copies', '', 'select', YESNO) +
+      '</div>';
+      if (String(r[C.dig] || '').toLowerCase() === 'yes')
+        h += field(C.digW, 'Digital line reads as', 'blank gives "Digital copies"', 'textarea', 2);
+
+      h += field(C.setD, 'Set design', 'props, lighting, styling — one per line', 'textarea', 4);
+
+      h += '<div class="two">' +
+        field(C.mini, 'Mini Keepsake set', '', 'select', YESNO) +
+        field(C.p8, '8×24 portrait', '', 'select', YESNO) +
+      '</div>';
+      h += field(C.prints, 'Printed items read as', 'one per line — wording only', 'textarea', 3);
+      if (String(r[C.p8] || '').toLowerCase() === 'yes')
+        h += field(C.frameW, 'Frame described as', 'e.g. in Acrylic Frame with Gold Studs');
+
+      h += field(C.xtra, 'Anything else', 'one per line, shown as written', 'textarea', 3);
+      h += '</div>';
+
+      var legacy = String(r[C.bullets] || '').trim();
+      if (legacy && !hasFields(r)) {
+        h += '<div class="sec"><h3>Old bullets — still in use for this part</h3>';
+        h += '<p class="note">Nothing above is filled in, so the card is still this text and ' +
+             'the summary still reads the numbers out of it. Fill the boxes above and this ' +
+             'is ignored.</p>';
+        h += field(C.bullets, '', '', 'textarea', 5);
+        h += '</div>';
+      }
     } else {
       h += '<div class="two">' + field(C.mins, 'Extra minutes', '', 'number') +
            field(C.match, 'Words in the booking note', 'how the job spots it') + '</div>';
@@ -346,14 +403,7 @@
 
     if (!isAdd) {
       h += '<div class="sec"><h3>What the job owes</h3>';
-      h += '<div class="two">' +
-        field(C.edits, 'Edited photos this adds', '', 'number') +
-        field(C.match, 'Old names', 'so bookings taken before a rename still match') +
-      '</div>';
-      h += '<div class="two">' +
-        field(C.mini, 'Mini Keepsake set', '', 'select', [['', 'no'], ['yes', 'yes']]) +
-        field(C.p8, '8×24 portrait', '', 'select', [['', 'no'], ['yes', 'yes']]) +
-      '</div>';
+      h += field(C.match, 'Old names', 'so bookings taken before a rename still match');
       h += field(C.todos, 'Prep and to-dos', 'one per line', 'textarea', 4);
       h += field(C.frames, 'Framing jobs', 'one per line', 'textarea', 2);
       h += '</div>';
@@ -389,8 +439,9 @@
     if (!String(r[C.part] || '').trim()) return 'This part has no name.';
     if (TYPES.indexOf(type) === -1) return 'Pick a kind.';
     if (String(r[C.price]).trim() === '') return 'No price — the page will ignore this part entirely.';
-    if (type !== 'add-on' && !String(r[C.bullets] || '').trim())
-      return 'No client bullets — the page will refuse the whole sheet until this has some.';
+    if (type !== 'add-on' && !hasFields(r) && !String(r[C.bullets] || '').trim())
+      return 'Nothing filled in under "What the client gets" — the page will refuse the ' +
+             'whole sheet until this part says something.';
     var id = String(r[C.id] || '').trim().toLowerCase();
     if (id && ROWS.filter(function (x) { return String(x[C.id] || '').trim().toLowerCase() === id; }).length > 1)
       return 'Another part already uses the id "' + id + '".';
@@ -414,19 +465,45 @@
   // Built from the form as it stands, so unsaved edits show. It calls the
   // SAME buildInclusions the two live pages use, rather than a copy — a
   // preview that agreed with nothing would be worse than no preview.
+  // Mirrors llHasFields in looklab-data.js: only the client-facing boxes
+  // count, never the job ones.
+  function hasFields(r) {
+    return !!(num(r[C.shoot]) || num(r[C.lights]) || num(r[C.outf]) || num(r[C.bg]) ||
+              yes(r[C.unl]) || yes(r[C.dig]) || String(r[C.makeup] || '').trim() ||
+              lines(r[C.setD]).length || lines(r[C.prints]).length ||
+              lines(r[C.xtra]).length || lines(r[C.digW]).length);
+  }
+  function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; }
+  function yes(v) { return String(v == null ? '' : v).trim().toLowerCase() === 'yes'; }
+  function lines(v) { return String(v == null ? '' : v).split(/[;\n]/)
+    .map(function (x) { return x.trim(); }).filter(Boolean); }
+
   function toPart(r) {
     return { id: String(r[C.id] || '').trim() || 'preview',
              name: String(r[C.part] || ''), emoji: String(r[C.emoji] || ''),
              sub: String(r[C.tag] || ''), price: parseFloat(String(r[C.price]).replace(/[^0-9.\-]/g, '')) || 0,
              dur: parseFloat(r[C.mins]) || 60, mins: parseFloat(r[C.mins]) || 0,
-             bullets: String(r[C.bullets] || '').split(/[;\n]/).map(function (x) { return x.trim(); })
-                        .filter(Boolean) };
+             shootMins: num(r[C.shoot]), shootWording: String(r[C.shootW] || ''),
+             backgrounds: num(r[C.bg]), lights: num(r[C.lights]), outfits: num(r[C.outf]),
+             outfitUpTo: yes(r[C.outfUp]), edits: num(r[C.edits]),
+             unlimited: yes(r[C.unl]), digital: yes(r[C.dig]),
+             digitalWording: String(r[C.digW] || ''), makeup: String(r[C.makeup] || ''),
+             pmini: yes(r[C.mini]), p8x24: yes(r[C.p8]),
+             frameWording: String(r[C.frameW] || ''),
+             setDesign: lines(r[C.setD]), prints: lines(r[C.prints]),
+             extraLines: lines(r[C.xtra]),
+             minsBySession: String(r[C.notime] || ''),
+             bullets: lines(r[C.bullets]) };
   }
 
   function drawPreview() {
     if (SEL < 0) { $('preview').innerHTML = ''; return; }
     var r = ROWS[SEL], type = String(r[C.type] || '').toLowerCase();
     var p = toPart(r);
+    // partBullets is the same function the live pages call, so this IS the
+    // card, not a drawing of one.
+    if (type !== 'add-on') p.bullets = partBullets(p, type === 'session' ? 'session'
+                                          : type === 'keepsake' ? 'keepsake' : 'mood');
     var h = '<div class="tile">' +
       '<div class="e">' + esc2(p.emoji || '•') + '</div>' +
       '<div class="n">' + esc2(p.name || 'Untitled') + '</div>' +

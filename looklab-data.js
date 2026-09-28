@@ -33,21 +33,53 @@ var LL_TIMEOUT   = 3500;             // after this, stop waiting and use what we
 // ── the fallback: what the Look Lab said on 2026-09-27 ─────────
 var LL_BUILTIN = {
   sessions: [
-    { id: 'Standard', emoji: '📸', name: 'Standard', price: 1200, dur: 30, dress: 'add-on', sub: 'A quick portrait session', bullets: ['10-minute photographer session', '1 background', 'Digital copies', 'Bring your own outfit or rent Premium Dress'] },
-    { id: 'Signature', emoji: '✨', name: 'Signature', price: 3000, dur: 60, dress: 'add-on', sub: 'For clients who want photographer guidance', bullets: ['20-minute photographer session', '2 light styles', '1 outfit change', 'Optional: Use of available outfits', '3 edited photos*', 'Basic hair & makeup'] },
-    { id: 'Prestige', emoji: '👑', name: 'Prestige', price: 5000, dur: 90, dress: 'included', sub: 'The full portrait experience', bullets: ['45-minute guided shoot', 'Unlimited shots', '2 light styles', 'up to 2 outfit change', 'FREE use of 1 Premium Dress', 'Optional: Use of available outfits', '5 edited photos*', 'Glam Make up look', '8×24 portrait included'] }
+    { id: 'Standard', emoji: '📸', name: 'Standard', price: 1200, dur: 30, dress: 'add-on',
+      sub: 'A quick portrait session',
+      shootMins: 10, shootWording: 'photographer session', backgrounds: 1, digital: true,
+      extraLines: ['Bring your own outfit or rent Premium Dress'] },
+    { id: 'Signature', emoji: '✨', name: 'Signature', price: 3000, dur: 60, dress: 'add-on',
+      sub: 'For clients who want photographer guidance',
+      shootMins: 20, shootWording: 'photographer session', lights: 2, outfits: 1, edits: 3,
+      makeup: 'Basic hair & makeup',
+      extraLines: ['Optional: Use of available outfits'] },
+    { id: 'Prestige', emoji: '👑', name: 'Prestige', price: 5000, dur: 90, dress: 'included',
+      sub: 'The full portrait experience',
+      shootMins: 45, shootWording: 'guided shoot', unlimited: true, lights: 2,
+      outfits: 2, outfitUpTo: true, edits: 5, makeup: 'Glam Make up look', p8x24: true,
+      prints: ['8×24 portrait included'],
+      extraLines: ['FREE use of 1 Premium Dress', 'Optional: Use of available outfits'] }
   ],
   moods: [
-    { id: 'styleshots', emoji: '✨', name: 'Styleshots', sub: 'Modern / Clean / Confident', price: 0, mins: 0, bullets: ['Photographer-guided posing', 'Contemporary lighting', 'Personalized portrait direction', 'Standard lighting'] },
-    { id: 'coatcode', emoji: '🖤', name: 'The Coat Code', sub: 'Luxury / Bold / Fashion', price: 800, mins: 10, minsBySession: 'Standard: 0', bullets: ['Prestige fur coat', 'Dark editorial lighting', 'High-fashion posing', 'Foil styling', '+10 mins shoot for Signature and Prestige Session', '+2 edited photo'] },
-    { id: 'angelic', emoji: '🪽', name: 'Angelic Muse', sub: 'Ethereal / Feminine / Dreamy', price: 800, mins: 10, minsBySession: 'Standard: 0', bullets: ['Angel wings', 'Celestial lighting', 'Cloud or Foil Styling', '+10 mins shoot for Signature and Prestige Session', '+2 edited photo'] }
+    { id: 'styleshots', emoji: '✨', name: 'Styleshots', sub: 'Modern / Clean / Confident',
+      price: 0, mins: 0,
+      setDesign: ['Photographer-guided posing', 'Contemporary lighting',
+                  'Personalized portrait direction', 'Standard lighting'] },
+    { id: 'coatcode', emoji: '🖤', name: 'The Coat Code', sub: 'Luxury / Bold / Fashion',
+      price: 800, mins: 10, minsBySession: 'Standard: 0',
+      shootMins: 10, shootWording: 'shoot for Signature and Prestige Session', edits: 2,
+      setDesign: ['Prestige fur coat', 'Dark editorial lighting', 'High-fashion posing',
+                  'Foil styling'] },
+    { id: 'angelic', emoji: '🪽', name: 'Angelic Muse', sub: 'Ethereal / Feminine / Dreamy',
+      price: 800, mins: 10, minsBySession: 'Standard: 0',
+      shootMins: 10, shootWording: 'shoot for Signature and Prestige Session', edits: 2,
+      setDesign: ['Angel wings', 'Celestial lighting', 'Cloud or Foil Styling'] }
   ],
-  double: { id: 'double', emoji: '💫', name: 'Twofold', sub: 'Coat Code × Angelic Muse', price: 1800, mins: 30, bullets: ['Two completely different looks', 'Fur coat AND angel wings', '+10 mins time', 'Mini Keepsake included', '8×24in printed portrait', '+2 edited photos'] },
+  double: { id: 'double', emoji: '💫', name: 'Twofold', sub: 'Coat Code × Angelic Muse',
+    price: 1800, mins: 30, shootMins: 10, shootWording: 'time', edits: 2,
+    pmini: true, p8x24: true,
+    prints: ['Mini Keepsake included', '8×24in printed portrait'],
+    setDesign: ['Two completely different looks', 'Fur coat AND angel wings'] },
   keepsakes: [
-    { id: 'digital', emoji: '💻', name: 'Digital', price: 0, notWith: 'Twofold', bullets: ['All edited photos', 'Digital copies'] },
-    { id: 'mini', emoji: '🖼️', name: 'Mini Keepsake', price: 100, notWith: 'Twofold', bullets: ['4 pcs 2×3in prints', '2 pcs 3×4in prints'] },
-    { id: 'wall', emoji: '🎥', name: 'Prestige Wall', price: 1000, prestigePrice: 0, freeWith: 'Twofold', onlyWith: 'Twofold', bullets: ['Mini Keepsake included', '8×24in printed portrait', '+2 edited photos'] },
-    { id: 'acrylic', emoji: '💎', name: 'Prestige Acrylic', price: 1500, prestigePrice: 1000, bullets: ['Mini Keepsake included', '8×24in portrait in Acrylic Frame with Gold Studs', '+3 edited photos'] }
+    { id: 'digital', emoji: '💻', name: 'Digital', price: 0, notWith: 'Twofold',
+      digital: true, digitalWording: 'All edited photos\nDigital copies' },
+    { id: 'mini', emoji: '🖼️', name: 'Mini Keepsake', price: 100, notWith: 'Twofold',
+      pmini: true, prints: ['4 pcs 2×3in prints', '2 pcs 3×4in prints'] },
+    { id: 'wall', emoji: '🎥', name: 'Prestige Wall', price: 1000, prestigePrice: 0,
+      freeWith: 'Twofold', onlyWith: 'Twofold', pmini: true, p8x24: true, edits: 2,
+      prints: ['Mini Keepsake included', '8×24in printed portrait'] },
+    { id: 'acrylic', emoji: '💎', name: 'Prestige Acrylic', price: 1500, prestigePrice: 1000,
+      pmini: true, p8x24: true, edits: 3, frameWording: 'in Acrylic Frame with Gold Studs',
+      prints: ['Mini Keepsake included', '8×24in portrait in Acrylic Frame with Gold Studs'] }
   ],
   extras: [
     { key: 'outfit', name: 'Additional Outfit Change', price: 300, mins: 0 },
@@ -62,6 +94,7 @@ var LL_BUILTIN = {
 // ── what's in force right now ──────────────────────────────────
 // Starts as the built-ins so a page that renders before the fetch finishes
 // still shows a complete, correct Look Lab rather than nothing.
+llRenderBullets(LL_BUILTIN);
 var SESSIONS  = LL_BUILTIN.sessions;
 var MOODS     = LL_BUILTIN.moods;
 var DOUBLE    = LL_BUILTIN.double;
@@ -198,6 +231,105 @@ function slotMinutes(sessionId, moodId, picked) {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  INCLUSIONS AS FIELDS, NOT PROSE
+//  ------------------------------------------------------------
+//  Every part used to carry its inclusions as a list of typed-out bullets,
+//  and the client summary worked out the totals by reading them. That put a
+//  trap in the sheet: "3 edited photos" counted, "3 edited pics" didn't, and
+//  nothing on screen said which you had written.
+//
+//  Now each thing a client gets is its own field — shoot minutes, light
+//  styles, outfit changes, edited photos, digital copies, the makeup look,
+//  the set design. The card bullets are GENERATED from those fields, and the
+//  summary adds up the fields directly. There is nothing left to phrase
+//  correctly, and the card and the summary cannot disagree because neither
+//  reads the other.
+//
+//  A part with no fields filled in still works exactly as before, by reading
+//  its bullets — so a sheet that hasn't been migrated behaves as it always
+//  did rather than emptying the page.
+// ══════════════════════════════════════════════════════════════
+
+function llNum(v) {
+  if (v === '' || v === null || v === undefined) return 0;
+  var n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+function llYes(v) {
+  var s = String(v == null ? '' : v).trim().toLowerCase();
+  return v === true || s === 'yes' || s === 'true' || s === '✓' || s === 'y';
+}
+function llLines(v) {
+  return String(v == null ? '' : v).split(/[;\n]/)
+    .map(function (x) { return x.trim(); }).filter(Boolean);
+}
+
+// Does this part describe itself in fields, or only in bullets?
+// Only the CLIENT-facing columns count. Edited Photos, Mini Keepsake Set and
+// 8x24 Portrait are job columns that were on the tab long before any of this
+// and are filled on nearly every row — treating them as "described in fields"
+// would quietly discard the bullets of a part nobody had got to yet.
+function llHasFields(p) {
+  if (!p) return false;
+  return !!(p.shootMins || p.lights || p.outfits || p.backgrounds ||
+            p.unlimited || p.digital || p.makeup ||
+            (p.setDesign && p.setDesign.length) || (p.prints && p.prints.length) ||
+            (p.extraLines && p.extraLines.length) || (p.digitalWording && p.digitalWording.length));
+}
+
+function llPlural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+// ── the card bullets ──────────────────────────────────────────
+// The order is fixed per kind, and it is the order the cards are already in,
+// so switching a part over to fields does not reshuffle what a client reads.
+function partBullets(p, kind) {
+  if (!p) return [];
+  if (!llHasFields(p)) return (p.bullets || []).slice();   // not migrated — as before
+
+  var out = [];
+  var shoot = p.shootMins ? (kind === 'session'
+      ? p.shootMins + '-minute ' + (p.shootWording || 'photographer session')
+      : '+' + p.shootMins + ' mins ' + (p.shootWording || 'shoot')) : '';
+  var lights  = p.lights  ? llPlural(p.lights, 'light style', 'light styles') : '';
+  var outfits = p.outfits ? (p.outfitUpTo ? 'up to ' : '') +
+                            llPlural(p.outfits, 'outfit change', 'outfit change') : '';
+  var edits   = p.edits ? (kind === 'session'
+      ? llPlural(p.edits, 'edited photo*', 'edited photos*')
+      : '+' + llPlural(p.edits, 'edited photo', 'edited photos')) : '';
+  var digital = p.digital ? (llLines(p.digitalWording).length
+      ? llLines(p.digitalWording) : ['Digital copies']) : [];
+  var setD = p.setDesign || [], extra = p.extraLines || [], prints = p.prints || [];
+
+  function push(x) { if (x) { if (x.join) x.forEach(function (y) { out.push(y); }); else out.push(x); } }
+
+  if (kind === 'session') {
+    push(shoot);
+    if (p.backgrounds) push(llPlural(p.backgrounds, 'background', 'backgrounds'));
+    if (p.unlimited) push('Unlimited shots');
+    push(lights); push(outfits); push(setD); push(extra);
+    push(edits); push(p.makeup); push(digital); push(prints);
+  } else if (kind === 'keepsake') {
+    push(extra); push(digital); push(prints); push(edits); push(setD);
+  } else {                                    // mood
+    push(setD); push(shoot);
+    if (p.unlimited) push('Unlimited shots');
+    push(lights); push(outfits); push(extra); push(prints);
+    push(edits); push(p.makeup); push(digital);
+  }
+  return out;
+}
+
+// Fill in .bullets for every part, so the tiles render from one place and a
+// part that has fields and a part that hasn't look identical to the pages.
+function llRenderBullets(d) {
+  (d.sessions  || []).forEach(function (p) { p.bullets = partBullets(p, 'session'); });
+  (d.moods     || []).forEach(function (p) { p.bullets = partBullets(p, 'mood'); });
+  if (d.double) d.double.bullets = partBullets(d.double, 'mood');
+  (d.keepsakes || []).forEach(function (p) { p.bullets = partBullets(p, 'keepsake'); });
+  return d;
+}
+
+// ══════════════════════════════════════════════════════════════
 //  LOADING THE SHEET
 // ══════════════════════════════════════════════════════════════
 
@@ -211,7 +343,10 @@ function llValid(d) {
       var e = list[i];
       if (!e || !e.id || !e.name) return false;
       if (typeof e.price !== 'number' || isNaN(e.price)) return false;
-      if (needBullets && (!e.bullets || !e.bullets.length)) return false;
+      // A part must say SOMETHING about what the client gets — either the
+      // fields, or the older bullets. Neither means a blank card, which is
+      // worse than falling back to the built-in list.
+      if (needBullets && !llHasFields(e) && (!e.bullets || !e.bullets.length)) return false;
     }
     return true;
   }
@@ -221,6 +356,7 @@ function llValid(d) {
 }
 
 function applyLookLab(d) {
+  llRenderBullets(d);
   SESSIONS  = d.sessions;
   MOODS     = d.moods;
   DOUBLE    = d.double || LL_BUILTIN.double;
@@ -424,8 +560,36 @@ function buildInclusions(opts) {
     return got;
   }
 
+  // Everything a part contributes that isn't its shoot time: the counted
+  // numbers, the flags, and the prose lines, which go wherever the caller
+  // says (a session's own notes, a mood's styling, a keepsake's take-home).
+  function takeFields(p, prose) {
+    n.edits   += p.edits   || 0;
+    n.outfits += p.outfits || 0;
+    if (p.outfitUpTo) upTo.outfits = true;
+    if (p.lights) n.styles = Math.max(n.styles, p.lights);
+    if (p.unlimited) has.unlimited = true;
+    if (p.digital)   has.digital   = true;
+    if (p.pmini)     has.mini      = true;
+    if (p.p8x24)     has.p8x24     = true;
+    if (p.frameWording && !frame8x24) frame8x24 = p.frameWording;
+    (p.setDesign  || []).forEach(function (b) { once(prose, b); });
+    (p.extraLines || []).forEach(function (b) { once(prose, b); });
+  }
+
   // ── the session ──
-  if (session) {
+  // A part that describes itself in fields is read from them. One that only
+  // has bullets is parsed exactly as before, so a sheet part-way through
+  // being filled in behaves, part by part, the way it always did.
+  if (session && llHasFields(session)) {
+    takeFields(session, sessionExtra);
+    if (session.shootMins) {
+      n.mins += session.shootMins;
+      minsPhrase = 'minute ' + (session.shootWording || 'photographer session');
+    }
+    if (session.backgrounds) sessionExtra.unshift(llPlural(session.backgrounds, 'background', 'backgrounds'));
+    if (session.makeup) hmu = session.makeup;
+  } else if (session) {
     (session.bullets || []).forEach(function (b) {
       if (count(b, true)) return;
       if (/hair|makeup|make up|glam/i.test(b)) { hmu = b; return; }
@@ -434,19 +598,26 @@ function buildInclusions(opts) {
   }
 
   // ── the mood ──
-  if (mood) {
+  if (mood && llHasFields(mood)) {
+    takeFields(mood, look);
+    // An explicit per-session figure replaces the mood's own, including when
+    // it is zero — which is how "this look does not lengthen a Standard
+    // shoot" ends up as a summary that simply doesn't mention extra time.
+    var add = moodOver !== null ? moodOver : (mood.shootMins || 0);
+    if (add > 0) n.mins += add;
+    if (mood.makeup && !hmu) hmu = mood.makeup;
+  } else if (mood) {
     (mood.bullets || []).forEach(function (b) {
       if (count(b, false, moodOver !== null)) return;
       once(look, b);
     });
-    // An explicit figure replaces whatever the bullets said, once — including
-    // when it is zero, which is how "this look does not lengthen a Standard
-    // shoot" ends up as a summary that simply doesn't mention extra time.
     if (moodOver !== null && moodOver > 0) n.mins += moodOver;
   }
 
   // ── the keepsake ──
-  if (keepsake) {
+  if (keepsake && llHasFields(keepsake)) {
+    takeFields(keepsake, takeHome);
+  } else if (keepsake) {
     (keepsake.bullets || []).forEach(function (b) {
       if (count(b)) return;
       once(takeHome, b);
@@ -510,6 +681,7 @@ function llNow() {
 
 if (typeof module !== 'undefined') module.exports = {
   llNow: llNow, llMood: llMood, llFind: llFind,
+  partBullets: partBullets, llRenderBullets: llRenderBullets, llHasFields: llHasFields,
   moodMinutes: moodMinutes, moodMinutesOverride: moodMinutesOverride,
   dressRule: dressRule, gownIncluded: gownIncluded, gownOffered: gownOffered,
   buildInclusions: buildInclusions, keepsakePrice: keepsakePrice,
