@@ -39,8 +39,8 @@ var LL_BUILTIN = {
   ],
   moods: [
     { id: 'styleshots', emoji: '✨', name: 'Styleshots', sub: 'Modern / Clean / Confident', price: 0, mins: 0, bullets: ['Photographer-guided posing', 'Contemporary lighting', 'Personalized portrait direction', 'Standard lighting'] },
-    { id: 'coatcode', emoji: '🖤', name: 'The Coat Code', sub: 'Luxury / Bold / Fashion', price: 800, mins: 10, bullets: ['Prestige fur coat', 'Dark editorial lighting', 'High-fashion posing', 'Foil styling', '+10 mins shoot', '+2 edited photo'] },
-    { id: 'angelic', emoji: '🪽', name: 'Angelic Muse', sub: 'Ethereal / Feminine / Dreamy', price: 800, mins: 10, bullets: ['Angel wings', 'Celestial lighting', 'Cloud or Foil Styling', '+10 mins shoot', '+2 edited photo'] }
+    { id: 'coatcode', emoji: '🖤', name: 'The Coat Code', sub: 'Luxury / Bold / Fashion', price: 800, mins: 10, noTimeWith: 'Standard', bullets: ['Prestige fur coat', 'Dark editorial lighting', 'High-fashion posing', 'Foil styling', '+10 mins shoot', '+2 edited photo'] },
+    { id: 'angelic', emoji: '🪽', name: 'Angelic Muse', sub: 'Ethereal / Feminine / Dreamy', price: 800, mins: 10, noTimeWith: 'Standard', bullets: ['Angel wings', 'Celestial lighting', 'Cloud or Foil Styling', '+10 mins shoot', '+2 edited photo'] }
   ],
   double: { id: 'double', emoji: '💫', name: 'Twofold', sub: 'Coat Code × Angelic Muse', price: 1800, mins: 30, bullets: ['Two completely different looks', 'Fur coat AND angel wings', '+10 mins time', 'Mini Keepsake included', '8×24in printed portrait', '+2 edited photos'] },
   keepsakes: [
@@ -118,6 +118,25 @@ function dressRule(sessionId, moodId) {
 function gownIncluded(sessionId, moodId) { return dressRule(sessionId, moodId) === 'included'; }
 function gownOffered(sessionId, moodId)  { return dressRule(sessionId, moodId) !== 'no'; }
 
+// Does this mood's extra shoot time apply to this session?
+// A mood's "+10 mins" is time added to a guided shoot. A Standard booking is
+// sold as a fixed ten minutes, so picking a look doesn't lengthen it — it
+// changes what happens during it. The exceptions live in the mood's
+// "No Extra Time With" cell, one or more session names, so this is a sheet
+// edit rather than a rule buried in three files.
+function moodTimeApplies(sessionId, moodId) {
+  var m = llMood(moodId);
+  if (!m || !m.noTimeWith) return true;
+  var s = llFind(SESSIONS, sessionId);
+  var names = [String(sessionId || '').toLowerCase()];
+  if (s && s.name) names.push(String(s.name).toLowerCase());
+  var listed = String(m.noTimeWith).split(/[;,\n]/).map(function (x) { return x.trim().toLowerCase(); });
+  for (var i = 0; i < listed.length; i++) {
+    if (listed[i] && names.indexOf(listed[i]) !== -1) return false;
+  }
+  return true;
+}
+
 function keepsakePrice(sessionId, keepsakeId, moodId) {
   var k = llFind(KEEPSAKES, keepsakeId);
   if (!k) return 0;
@@ -149,7 +168,7 @@ function llFind2(list, key) {
 function slotMinutes(sessionId, moodId, picked) {
   var s = llFind(SESSIONS, sessionId), m = llMood(moodId);
   var mins = (s && s.dur) || 60;
-  if (m) mins += m.mins || 0;
+  if (m && moodTimeApplies(sessionId, moodId)) mins += m.mins || 0;
   Object.keys(picked || {}).forEach(function (k) { if (picked[k]) mins += extraMins(k); });
   return mins;
 }
@@ -304,6 +323,11 @@ function buildInclusions(opts) {
   var extraDefs= opts.extraDefs|| [];     // the EXTRAS table
   var gown     = opts.gown     || '';     // a gown name, if one was picked
   var gownFree = !!opts.gownFree;
+  // Whether this mood's extra shoot time counts for this session. Worked out
+  // by moodTimeApplies() and passed in, so the summary and the calendar slot
+  // are answering the same question — a client reading "20-minute" while the
+  // diary blocks 10 is the failure this exists to prevent.
+  var moodMins = opts.moodMinutes !== false;
 
   // ── what we are counting ──
   var n = { mins: 0, edits: 0, outfits: 0, styles: 0 };
@@ -332,16 +356,21 @@ function buildInclusions(opts) {
   // ── the parser ────────────────────────────────────────────────
   // Returns true when a bullet was understood as a number we sum, in
   // which case it is not passed through as its own line.
-  function count(b, isSession) {
+  function count(b, isSession, skipMins) {
     var t = String(b || '');
     var m, got = false;
 
     m = t.match(/(\d+)\s*-?\s*(minute|mins?\b)(.*)$/i);
     if (m) {
-      n.mins += parseInt(m[1], 10);
-      if (isSession) {
-        var tail = String(m[3] || '').trim();
-        if (tail) minsPhrase = 'minute ' + tail;
+      // skipMins swallows the bullet rather than passing it through: a
+      // "+10 mins shoot" line shown to a client who is not getting ten extra
+      // minutes is worse than no line at all.
+      if (!skipMins) {
+        n.mins += parseInt(m[1], 10);
+        if (isSession) {
+          var tail = String(m[3] || '').trim();
+          if (tail) minsPhrase = 'minute ' + tail;
+        }
       }
       got = true;
     }
@@ -381,7 +410,7 @@ function buildInclusions(opts) {
   // ── the mood ──
   if (mood) {
     (mood.bullets || []).forEach(function (b) {
-      if (count(b)) return;
+      if (count(b, false, !moodMins)) return;
       once(look, b);
     });
   }
@@ -450,7 +479,7 @@ function llNow() {
 }
 
 if (typeof module !== 'undefined') module.exports = {
-  llNow: llNow, llMood: llMood, llFind: llFind,
+  llNow: llNow, llMood: llMood, llFind: llFind, moodTimeApplies: moodTimeApplies,
   dressRule: dressRule, gownIncluded: gownIncluded, gownOffered: gownOffered,
   buildInclusions: buildInclusions, keepsakePrice: keepsakePrice,
   keepsakeOptions: keepsakeOptions, slotMinutes: slotMinutes,

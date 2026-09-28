@@ -584,6 +584,7 @@
     var incl = buildInclusions({
       session: curSession, mood: curMood, keepsake: curKeepsake,
       extras: s.extras, extraDefs: EXTRAS,
+      moodMinutes: moodTimeApplies(s.session, s.mood),
       gown: gown ? gown.name : '', gownFree: gown ? gownRate === 0 : false
     });
     var inclHTML = incl.groups.map(function (grp) {
