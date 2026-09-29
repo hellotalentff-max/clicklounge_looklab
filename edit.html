@@ -142,6 +142,7 @@
   var HEAD = [];            // the tab's column headers, in order
   var ROWS = [];            // one object per row, keyed by header
   var SEL = -1, DIRTY = false;
+  var TOUCHED = {};         // which rows have actually been edited
 
   var TYPES = ['session', 'mood', 'keepsake', 'add-on'];
   var C = {                 // the columns this page manages
@@ -178,6 +179,21 @@
       return Array.prototype.map.call(new Uint8Array(buf), function (b) {
         return ('0' + b.toString(16)).slice(-2); }).join('');
     });
+  }
+
+  // A save carries every column of every changed row. Put that in a URL and
+  // it runs past the ~8k limit and the request never leaves the browser —
+  // which looks exactly like "could not reach the script". So saves go as a
+  // POST body, which has no such limit. text/plain keeps it a "simple"
+  // request, so the browser doesn't demand a CORS preflight Apps Script
+  // can't answer.
+  function callPost(body) {
+    return fetch(URL_, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.text(); })
+      .then(function (t) { try { return JSON.parse(t); } catch (e) { return null; } });
   }
 
   function call(action, extra) {
@@ -545,7 +561,27 @@
   }
 
   function draw() { drawList(); drawForm(); drawPreview(); }
-  function mark(on) { DIRTY = on; $('dirty').textContent = on ? '● unsaved' : ''; }
+  function mark(on) {
+    DIRTY = on;
+    // saveLookLab matches on Id and leaves rows it wasn't sent alone, so a
+    // save only has to carry what was touched. One price change is one row.
+    if (on && SEL > -1) TOUCHED[rowKey(ROWS[SEL])] = 1;
+    if (!on) TOUCHED = {};
+    $('dirty').textContent = on ? '● unsaved' : '';
+  }
+  var _newSeq = 0;
+  function rowKey(r) {
+    if (!r) return '';
+    if (!r.__k) { try { Object.defineProperty(r, '__k', { value: 'k' + (++_newSeq), enumerable: false }); }
+                  catch (e) { r.__k = 'k' + (++_newSeq); } }
+    return r.__k;
+  }
+  // Strip the page's own bookkeeping before anything is sent.
+  function clean(r) {
+    var o = {};
+    HEAD.forEach(function (h) { if (r.hasOwnProperty(h)) o[h] = r[h]; });
+    return o;
+  }
 
   // ── save ─────────────────────────────────────────────────────
   $('save').addEventListener('click', function () {
@@ -553,17 +589,28 @@
       var w = validate(ROWS[i]);
       if (w) { SEL = i; draw(); toast(ROWS[i][C.part] + ': ' + w, true); return; }
     }
+    var changed = ROWS.filter(function (r) { return TOUCHED[rowKey(r)]; }).map(clean);
+    if (!changed.length) { toast('Nothing has changed.'); return; }
+
     $('save').disabled = true; $('save').textContent = 'Saving…';
     // Re-make the token: the page may have been open across an hour boundary.
     makeToken(PIN).then(function (tok) {
       TOKEN = tok;
-      return call('saveLookLab', { token: tok, rows: JSON.stringify(ROWS) });
+      var body = { action: 'saveLookLab', token: tok, rows: JSON.stringify(changed) };
+      return callPost(body).catch(function () { return null; }).then(function (r) {
+        // If the POST couldn't go through at all, try the old route. With only
+        // the changed rows it now fits in a URL in all but the largest edits.
+        if (r) return r;
+        return call('saveLookLab', body);
+      });
     }).then(function (r) {
       $('save').disabled = false; $('save').textContent = '💾 Save all';
       if (!r || !r.ok) { toast((r && r.error) || 'Save failed.', true); return; }
       mark(false);
+      var n = changed.length;
       if (r.source === 'sheet') {
-        toast('Saved — ' + r.updated + ' updated, ' + r.added + ' added. The Look Lab is live on it.');
+        toast('Saved ' + n + (n === 1 ? ' part' : ' parts') + ' — ' + r.updated + ' updated, ' +
+              r.added + ' added. The Look Lab is live on it.');
       } else {
         toast('Saved, BUT the page is still on built-in prices: ' + (r.reason || ''), true);
       }
@@ -575,7 +622,8 @@
     if (DIRTY && !confirm('Reload from the sheet and lose your unsaved changes?')) return;
     call('getLookLabRows', { token: TOKEN }).then(function (r) {
       if (!r || !r.ok) { toast((r && r.error) || 'Could not reload.', true); return; }
-      HEAD = r.head; ROWS = r.rows; SEL = ROWS.length ? Math.min(SEL, ROWS.length - 1) : -1;
+      HEAD = r.head; ROWS = r.rows; TOUCHED = {};
+      SEL = ROWS.length ? Math.min(SEL, ROWS.length - 1) : -1;
       mark(false); draw(); refreshSource();
       toast('Reloaded from the sheet.');
     });
