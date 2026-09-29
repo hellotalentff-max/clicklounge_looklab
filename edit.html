@@ -53,8 +53,10 @@
     padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;color:var(--text);background:var(--white);}
   textarea{resize:vertical;line-height:1.55;}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;align-items:start;}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 14px;align-items:start;}
+  .f label{margin-top:12px;}
+  .f:first-child label{margin-top:12px;}
   @media(max-width:620px){.two,.three{grid-template-columns:1fr;}}
   .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;}
   .chk input{width:auto;}
@@ -281,18 +283,25 @@
   // ── the form ─────────────────────────────────────────────────
   function field(key, label, hint, kind, opts) {
     var r = ROWS[SEL], v = r[key] == null ? '' : r[key];
-    var lab = '<label>' + esc2(label) + (hint ? ' <span class="hint">— ' + esc2(hint) + '</span>' : '') + '</label>';
+    var lab = label
+      ? '<label>' + esc2(label) + (hint ? ' <span class="hint">— ' + esc2(hint) + '</span>' : '') + '</label>'
+      : '';
+    var input;
     if (kind === 'textarea')
-      return lab + '<textarea rows="' + (opts || 5) + '" data-k="' + esc2(key) + '">' + esc2(v) + '</textarea>';
-    if (kind === 'select') {
-      return lab + '<select data-k="' + esc2(key) + '">' + opts.map(function (o) {
+      input = '<textarea rows="' + (opts || 5) + '" data-k="' + esc2(key) + '">' + esc2(v) + '</textarea>';
+    else if (kind === 'select')
+      input = '<select data-k="' + esc2(key) + '">' + opts.map(function (o) {
         return '<option value="' + esc2(o[0]) + '"' +
           (String(v).toLowerCase() === String(o[0]).toLowerCase() ? ' selected' : '') + '>' +
           esc2(o[1]) + '</option>'; }).join('') + '</select>';
-    }
-    if (kind === 'number')
-      return lab + '<input type="number" step="1" data-k="' + esc2(key) + '" value="' + esc2(v) + '">';
-    return lab + '<input type="text" data-k="' + esc2(key) + '" value="' + esc2(v) + '">';
+    else if (kind === 'number')
+      input = '<input type="number" step="1" data-k="' + esc2(key) + '" value="' + esc2(v) + '">';
+    else
+      input = '<input type="text" data-k="' + esc2(key) + '" value="' + esc2(v) + '">';
+    // One wrapper per field: .two and .three lay out their CHILDREN in
+    // columns, so a bare label + input pair would put the label in one column
+    // and its own box in the next.
+    return '<div class="f">' + lab + input + '</div>';
   }
 
   function drawForm() {
