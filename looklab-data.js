@@ -24,7 +24,7 @@
 //  can't be reached: edit LL_BUILTIN below.
 // ══════════════════════════════════════════════════════════════
 
-var LOOKLAB_URL = 'https://script.google.com/macros/s/AKfycbx_Y5nH34Rq16JJ2AxBDr30ttmDFuic61OqoC0u3Wq0zogHEhfoV6qE7uiNagI43flVgw/exec';
+var LOOKLAB_URL = 'https://script.google.com/macros/s/AKfycbwRIZPUmK-xm0fFsL1bnn9KAUQ9r57uDG_OXPQi7WyP5VZ0jlWaOq72pmVzUoiAesDEiA/exec';
 
 var LL_CACHE_KEY = 'cls_ll_cache';
 var LL_TTL_MS    = 10 * 60 * 1000;   // a price edit shows up within 10 minutes
